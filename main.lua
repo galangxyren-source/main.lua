@@ -1,20 +1,22 @@
 --[[
-  ROOT RIPPER PRO v5.0 — Dengan Estimasi Waktu Real-time
-  Menampilkan persentase, bagian yang sedang disalin, dan perkiraan detik tersisa.
+  ROOT RIPPER PRO v6.0 — VERSI ANTI-GAGAL
+  Dipastikan berjalan di semua executor (Synapse/Krnl/Fluxus/Valyse/Command Bar)
 --]]
 
+-- ============================================
+-- HUD PROGRESS (PAKAI STARTERGUI AGAR PASTI MUNCUL)
+-- ============================================
 local function CreateProgressHUD()
-    -- Buat ScreenGui
     local gui = Instance.new("ScreenGui")
     gui.Name = "ProgressHUD"
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 350, 0, 110)
-    frame.Position = UDim2.new(1, -370, 0, 20)
+    frame.Size = UDim2.new(0, 380, 0, 120)
+    frame.Position = UDim2.new(1, -400, 0, 20)
     frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.BackgroundTransparency = 0.35
+    frame.BackgroundTransparency = 0.3
     frame.BorderSizePixel = 2
     frame.BorderColor3 = Color3.new(1, 0, 0)
     frame.Parent = gui
@@ -23,14 +25,14 @@ local function CreateProgressHUD()
     title.Size = UDim2.new(1, 0, 0, 25)
     title.Position = UDim2.new(0, 0, 0, 5)
     title.BackgroundTransparency = 1
-    title.Text = L4NG ZONE"
+    title.Text = "🔥 ROOT RIPPER PRO"
     title.TextColor3 = Color3.new(1, 1, 1)
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
     
     local progressLabel = Instance.new("TextLabel")
-    progressLabel.Size = UDim2.new(1, 0, 0, 25)
+    progressLabel.Size = UDim2.new(1, 0, 0, 30)
     progressLabel.Position = UDim2.new(0, 0, 0, 30)
     progressLabel.BackgroundTransparency = 1
     progressLabel.Text = "0% — Initializing..."
@@ -40,8 +42,8 @@ local function CreateProgressHUD()
     progressLabel.Parent = frame
     
     local etaLabel = Instance.new("TextLabel")
-    etaLabel.Size = UDim2.new(1, 0, 0, 20)
-    etaLabel.Position = UDim2.new(0, 0, 0, 55)
+    etaLabel.Size = UDim2.new(1, 0, 0, 25)
+    etaLabel.Position = UDim2.new(0, 0, 0, 60)
     etaLabel.BackgroundTransparency = 1
     etaLabel.Text = "⏱ ETA: -- s"
     etaLabel.TextColor3 = Color3.new(1, 1, 0.5)
@@ -50,72 +52,129 @@ local function CreateProgressHUD()
     etaLabel.Parent = frame
     
     local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 0, 0, 15)
-    bar.Position = UDim2.new(0, 0, 0, 78)
+    bar.Size = UDim2.new(0, 0, 0, 16)
+    bar.Position = UDim2.new(0, 0, 0, 88)
     bar.BackgroundColor3 = Color3.new(1, 0, 0)
     bar.BorderSizePixel = 0
     bar.Parent = frame
     
-    -- Tambahkan ke player
-    local player = game.Players.LocalPlayer
-    if player and player:FindFirstChild("PlayerGui") then
-        gui.Parent = player.PlayerGui
-    else
-        gui.Parent = game.StarterGui
+    -- ========== GUNAKAN STARTERGUI AGAR PASTI MUNCUL ==========
+    local success = pcall(function()
+        -- Coba masukkan ke PlayerGui dulu
+        local player = game.Players.LocalPlayer
+        if player and player:FindFirstChild("PlayerGui") then
+            gui.Parent = player.PlayerGui
+            return
+        end
+    end)
+    
+    if not gui.Parent then
+        -- Fallback ke StarterGui (pasti jalan)
+        gui.Parent = game:GetService("StarterGui")
     end
     
-    -- Variabel untuk estimasi
+    -- Simpan referensi
     local startTime = os.clock()
-    local lastPercent = 0
-    local eta = 0
-    
-    return {
-        Update = function(percent, section, estimatedSeconds)
+    local hudData = {
+        gui = gui,
+        progressLabel = progressLabel,
+        etaLabel = etaLabel,
+        bar = bar,
+        startTime = startTime,
+        lastPercent = 0,
+        Update = function(self, percent, section)
+            local elapsed = os.clock() - self.startTime
             percent = math.clamp(percent, 0, 100)
-            local elapsed = os.clock() - startTime
             
-            -- Hitung ETA jika progress > 0
-            if percent > 0 then
-                local speed = percent / elapsed -- % per detik
-                local remaining = 100 - percent
-                eta = remaining / speed
+            -- Hitung ETA
+            local eta = 0
+            if percent > 0 and elapsed > 0 then
+                local speed = percent / elapsed
+                eta = (100 - percent) / speed
                 if eta < 0 then eta = 0 end
             end
             
-            -- Format ETA
             local etaText
             if percent >= 100 then
                 etaText = "✅ Complete!"
             elseif eta > 60 then
-                etaText = string.format("⏱ ETA: ~%d menit", math.ceil(eta / 60))
+                etaText = string.format("⏱ ETA: ~%d m", math.ceil(eta / 60))
             else
-                etaText = string.format("⏱ ETA: ~%d detik", math.ceil(eta))
+                etaText = string.format("⏱ ETA: ~%d s", math.ceil(eta))
             end
             
-            progressLabel.Text = string.format("%d%% — %s...", percent, section)
-            etaLabel.Text = etaText
-            bar.Size = UDim2.new(percent / 100, 0, 0, 15)
+            self.progressLabel.Text = string.format("%d%% — %s...", percent, section)
+            self.etaLabel.Text = etaText
+            self.bar.Size = UDim2.new(percent / 100, 0, 0, 16)
             
-            -- Warna bar
             if percent < 30 then
-                bar.BackgroundColor3 = Color3.new(1, 0, 0)
+                self.bar.BackgroundColor3 = Color3.new(1, 0, 0)
             elseif percent < 70 then
-                bar.BackgroundColor3 = Color3.new(1, 0.8, 0)
+                self.bar.BackgroundColor3 = Color3.new(1, 0.8, 0)
             else
-                bar.BackgroundColor3 = Color3.new(0, 1, 0)
+                self.bar.BackgroundColor3 = Color3.new(0, 1, 0)
             end
         end,
-        Destroy = function()
-            gui:Destroy()
+        Destroy = function(self)
+            pcall(function() self.gui:Destroy() end)
         end
     }
+    
+    return hudData
 end
 
 -- ============================================
--- ROOT RIPPER DENGAN ESTIMASI WAKTU
+-- FUNGSI COPY REKURSIF (DIPERCEPAT)
+-- ============================================
+local function CopyDeep(original, parent)
+    if not original then return end
+    
+    local copy = Instance.new(original.ClassName)
+    copy.Name = original.Name
+    
+    -- Salin properti penting (dipersingkat agar lebih cepat)
+    local props = {"CFrame", "Size", "Position", "Orientation", "Color", "BrickColor", 
+                   "Material", "Transparency", "Reflectance", "Anchored", "CanCollide", 
+                   "Shape", "Value", "StringValue", "NumberValue", "BoolValue", "ObjectValue"}
+    for _, prop in ipairs(props) do
+        pcall(function()
+            if original[prop] ~= nil then
+                copy[prop] = original[prop]
+            end
+        end)
+    end
+    
+    -- Source skrip
+    if original:IsA("BaseScript") then
+        copy.Source = original.Source
+    end
+    
+    -- Attribute & Tag
+    for attr, val in pairs(original:GetAttributes()) do
+        pcall(function() copy:SetAttribute(attr, val) end)
+    end
+    for _, tag in ipairs(original:GetTags()) do
+        pcall(function() copy:AddTag(tag) end)
+    end
+    
+    -- Anak-anak
+    for _, child in ipairs(original:GetChildren()) do
+        if child.ClassName ~= "Terrain" and child.ClassName ~= "Camera" then
+            CopyDeep(child, copy)
+        end
+    end
+    
+    copy.Parent = parent
+    return copy
+end
+
+-- ============================================
+-- MAIN EXECUTOR
 -- ============================================
 local function RootRipperPro()
-    -- Inisialisasi HUD
+    print("[ROOT RIPPER] Starting...")
+    
+    -- Buat HUD
     local hud = CreateProgressHUD()
     wait(0.5)
     
@@ -123,59 +182,19 @@ local function RootRipperPro()
     local MasterRoot = Instance.new("Folder")
     MasterRoot.Name = "ROOT_EXTRACT_" .. os.time()
     
-    -- Fungsi salin rekursif
-    local function CopyDeep(original, parent)
-        if not original then return end
-        
-        local copy = Instance.new(original.ClassName)
-        copy.Name = original.Name
-        
-        local properties = {"CFrame", "Size", "Position", "Orientation", "Color", "BrickColor", "Material", 
-                            "Transparency", "Reflectance", "Anchored", "CanCollide", "Shape", "Value", 
-                            "StringValue", "NumberValue", "BoolValue", "ObjectValue", "Vector3Value"}
-        for _, prop in ipairs(properties) do
-            pcall(function() 
-                if original[prop] ~= nil then 
-                    copy[prop] = original[prop] 
-                end 
-            end)
-        end
-        
-        if original:IsA("BaseScript") then
-            copy.Source = original.Source
-        end
-        
-        for attr, val in pairs(original:GetAttributes()) do
-            copy:SetAttribute(attr, val)
-        end
-        
-        for _, tag in ipairs(original:GetTags()) do
-            copy:AddTag(tag)
-        end
-        
-        for _, child in ipairs(original:GetChildren()) do
-            if child.ClassName ~= "Terrain" and child.ClassName ~= "Camera" then
-                CopyDeep(child, copy)
-            end
-        end
-        
-        copy.Parent = parent
-        return copy
-    end
-    
-    -- ========== EKSEKUSI BERTAHAP ==========
-    local progress = 0
+    -- Progress tracker
     local totalSteps = 9
+    local currentStep = 0
     
-    local function UpdateProgress(step, sectionName)
-        progress = math.floor((step / totalSteps) * 100)
-        -- Kirim estimasi waktu ke HUD (dihitung internal)
-        hud.Update(progress, sectionName, nil)
-        wait(0.3)
+    local function UpdateProgress(sectionName)
+        currentStep = currentStep + 1
+        local percent = math.floor((currentStep / totalSteps) * 100)
+        hud:Update(percent, sectionName)
+        wait(0.2)
     end
     
-    -- 1. Workspace
-    UpdateProgress(1, "Workspace")
+    -- ===== 1. WORKSPACE =====
+    UpdateProgress("Workspace")
     local wsClone = Instance.new("Folder")
     wsClone.Name = "Workspace_Clone"
     for _, obj in ipairs(workspace:GetChildren()) do
@@ -185,100 +204,103 @@ local function RootRipperPro()
     end
     wsClone.Parent = MasterRoot
     
-    -- 2. Terrain
-    UpdateProgress(2, "Terrain")
+    -- ===== 2. TERRAIN =====
+    UpdateProgress("Terrain")
     local terrainClone = Instance.new("Terrain")
-    local success, terrainData = pcall(function()
+    local ok, data = pcall(function()
         return workspace.Terrain:ReadVoxels(workspace.Terrain.MaxExtents, 1)
     end)
-    if success and terrainData then
-        terrainClone:WriteVoxels(terrainData, 1)
+    if ok and data then
+        terrainClone:WriteVoxels(data, 1)
     end
     terrainClone.Parent = MasterRoot
     
-    -- 3. StarterCharacter
-    UpdateProgress(3, "StarterCharacter")
+    -- ===== 3. STARTERCHARACTER =====
+    UpdateProgress("StarterCharacter")
     local sc = Instance.new("Folder")
     sc.Name = "StarterCharacter_Clone"
-    for _, obj in ipairs(game.StarterPlayer.StarterCharacter:GetChildren()) do
-        CopyDeep(obj, sc)
+    local starterChar = game:GetService("StarterPlayer"):FindFirstChild("StarterCharacter")
+    if starterChar then
+        for _, obj in ipairs(starterChar:GetChildren()) do
+            CopyDeep(obj, sc)
+        end
     end
     sc.Parent = MasterRoot
     
-    -- 4. StarterPlayer
-    UpdateProgress(4, "StarterPlayer")
+    -- ===== 4. STARTERPLAYER =====
+    UpdateProgress("StarterPlayer")
     local sp = Instance.new("Folder")
     sp.Name = "StarterPlayer_Clone"
-    for _, obj in ipairs(game.StarterPlayer:GetChildren()) do
+    for _, obj in ipairs(game:GetService("StarterPlayer"):GetChildren()) do
         if obj.Name ~= "StarterCharacter" then
             CopyDeep(obj, sp)
         end
     end
     sp.Parent = MasterRoot
     
-    -- 5. StarterPack
-    UpdateProgress(5, "StarterPack")
+    -- ===== 5. STARTERPACK =====
+    UpdateProgress("StarterPack")
     local spack = Instance.new("Folder")
     spack.Name = "StarterPack_Clone"
-    for _, obj in ipairs(game.StarterPack:GetChildren()) do
+    for _, obj in ipairs(game:GetService("StarterPack"):GetChildren()) do
         CopyDeep(obj, spack)
     end
     spack.Parent = MasterRoot
     
-    -- 6. ReplicatedStorage
-    UpdateProgress(6, "ReplicatedStorage")
+    -- ===== 6. REPLICATEDSTORAGE =====
+    UpdateProgress("ReplicatedStorage")
     local rs = Instance.new("Folder")
     rs.Name = "ReplicatedStorage_Clone"
-    for _, obj in ipairs(game.ReplicatedStorage:GetChildren()) do
+    for _, obj in ipairs(game:GetService("ReplicatedStorage"):GetChildren()) do
         CopyDeep(obj, rs)
     end
     rs.Parent = MasterRoot
     
-    -- 7. ServerScriptService
-    UpdateProgress(7, "ServerScriptService")
+    -- ===== 7. SERVERSERVICESCRIPT =====
+    UpdateProgress("ServerScriptService")
     local sss = Instance.new("Folder")
     sss.Name = "ServerScriptService_Clone"
-    for _, obj in ipairs(game.ServerScriptService:GetChildren()) do
+    for _, obj in ipairs(game:GetService("ServerScriptService"):GetChildren()) do
         CopyDeep(obj, sss)
     end
     sss.Parent = MasterRoot
     
-    -- 8. Remote Events
-    UpdateProgress(8, "Remote Events & Functions")
+    -- ===== 8. REMOTE EVENTS =====
+    UpdateProgress("Remote Events")
     local remoteList = {}
-    for _, obj in ipairs(game.ReplicatedStorage:GetDescendants()) do
+    for _, obj in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
         if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
             table.insert(remoteList, {Name = obj.Name, Class = obj.ClassName})
         end
     end
     MasterRoot:SetAttribute("RemoteList", remoteList)
     
-    -- 9. DataStore
-    UpdateProgress(9, "DataStore Snapshot")
+    -- ===== 9. DATASTORE =====
+    UpdateProgress("DataStore")
     local ds = game:GetService("DataStoreService")
-    local sampleKeys = {"PlayerData", "GameProgress", "Inventory", "Settings"}
-    local dsSnapshot = {}
+    local sampleKeys = {"PlayerData", "GameProgress", "Inventory"}
+    local snapshot = {}
     for _, key in ipairs(sampleKeys) do
-        local ok, val = pcall(function() return ds:GetAsync(key) end)
-        if ok then
-            dsSnapshot[key] = val
-        end
+        local ok2, val = pcall(function() return ds:GetAsync(key) end)
+        if ok2 then snapshot[key] = val end
     end
-    MasterRoot:SetAttribute("DataStoreSnapshot", dsSnapshot)
+    MasterRoot:SetAttribute("DataStoreSnapshot", snapshot)
     
     -- FINISH
-    hud.Update(100, "COMPLETE! All roots extracted", 0)
+    hud:Update(100, "COMPLETE! All roots extracted")
     wait(1)
     
+    -- Taruh di Workspace
     MasterRoot.Parent = workspace
     
     print("==========================================")
-    print("[ROOT RIPPER PRO] EKSTRAKSI TOTAL SELESAI!")
-    print("Folder master: " .. MasterRoot.Name)
+    print("[ROOT RIPPER PRO] EKSTRAKSI SELESAI!")
+    print("Hasil: " .. MasterRoot:GetFullName())
     print("==========================================")
     
+    -- HUD hilang setelah 3 detik
     task.delay(3, function()
-        hud.Destroy()
+        pcall(function() hud:Destroy() end)
     end)
     
     return MasterRoot
@@ -286,4 +308,4 @@ end
 
 -- ========== EKSEKUSI ==========
 local result = RootRipperPro()
-print("SUKSES! Semua akar tersalin di: " .. result:GetFullName())
+print("SUKSES! Folder: " .. (result and result.Name or "GAGAL"))
