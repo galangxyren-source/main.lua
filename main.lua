@@ -1,20 +1,20 @@
 --[[
-  ROOT RIPPER PRO v4.0 — Dengan Progress HUD di kanan atas
-  Menampilkan persentase & bagian yang sedang disalin secara real-time.
+  ROOT RIPPER PRO v5.0 — Dengan Estimasi Waktu Real-time
+  Menampilkan persentase, bagian yang sedang disalin, dan perkiraan detik tersisa.
 --]]
 
 local function CreateProgressHUD()
-    -- Buat ScreenGui di StarterGui (agar muncul di layar)
+    -- Buat ScreenGui
     local gui = Instance.new("ScreenGui")
     gui.Name = "ProgressHUD"
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 300, 0, 80)
-    frame.Position = UDim2.new(1, -320, 0, 20)
+    frame.Size = UDim2.new(0, 350, 0, 110)
+    frame.Position = UDim2.new(1, -370, 0, 20)
     frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.BackgroundTransparency = 0.3
+    frame.BackgroundTransparency = 0.35
     frame.BorderSizePixel = 2
     frame.BorderColor3 = Color3.new(1, 0, 0)
     frame.Parent = gui
@@ -23,7 +23,7 @@ local function CreateProgressHUD()
     title.Size = UDim2.new(1, 0, 0, 25)
     title.Position = UDim2.new(0, 0, 0, 5)
     title.BackgroundTransparency = 1
-    title.Text = "🔥 ROOT RIPPER PRO"
+    title.Text = L4NG ZONE"
     title.TextColor3 = Color3.new(1, 1, 1)
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
@@ -39,9 +39,19 @@ local function CreateProgressHUD()
     progressLabel.Font = Enum.Font.GothamMedium
     progressLabel.Parent = frame
     
+    local etaLabel = Instance.new("TextLabel")
+    etaLabel.Size = UDim2.new(1, 0, 0, 20)
+    etaLabel.Position = UDim2.new(0, 0, 0, 55)
+    etaLabel.BackgroundTransparency = 1
+    etaLabel.Text = "⏱ ETA: -- s"
+    etaLabel.TextColor3 = Color3.new(1, 1, 0.5)
+    etaLabel.TextScaled = true
+    etaLabel.Font = Enum.Font.GothamMedium
+    etaLabel.Parent = frame
+    
     local bar = Instance.new("Frame")
     bar.Size = UDim2.new(0, 0, 0, 15)
-    bar.Position = UDim2.new(0, 0, 0, 58)
+    bar.Position = UDim2.new(0, 0, 0, 78)
     bar.BackgroundColor3 = Color3.new(1, 0, 0)
     bar.BorderSizePixel = 0
     bar.Parent = frame
@@ -51,17 +61,42 @@ local function CreateProgressHUD()
     if player and player:FindFirstChild("PlayerGui") then
         gui.Parent = player.PlayerGui
     else
-        -- Fallback ke StarterGui
         gui.Parent = game.StarterGui
     end
     
+    -- Variabel untuk estimasi
+    local startTime = os.clock()
+    local lastPercent = 0
+    local eta = 0
+    
     return {
-        Update = function(percent, section)
+        Update = function(percent, section, estimatedSeconds)
             percent = math.clamp(percent, 0, 100)
-            progressLabel.Text = string.format("%d%% — Copying %s...", percent, section)
+            local elapsed = os.clock() - startTime
+            
+            -- Hitung ETA jika progress > 0
+            if percent > 0 then
+                local speed = percent / elapsed -- % per detik
+                local remaining = 100 - percent
+                eta = remaining / speed
+                if eta < 0 then eta = 0 end
+            end
+            
+            -- Format ETA
+            local etaText
+            if percent >= 100 then
+                etaText = "✅ Complete!"
+            elseif eta > 60 then
+                etaText = string.format("⏱ ETA: ~%d menit", math.ceil(eta / 60))
+            else
+                etaText = string.format("⏱ ETA: ~%d detik", math.ceil(eta))
+            end
+            
+            progressLabel.Text = string.format("%d%% — %s...", percent, section)
+            etaLabel.Text = etaText
             bar.Size = UDim2.new(percent / 100, 0, 0, 15)
             
-            -- Warna berubah berdasarkan progress
+            -- Warna bar
             if percent < 30 then
                 bar.BackgroundColor3 = Color3.new(1, 0, 0)
             elseif percent < 70 then
@@ -77,7 +112,7 @@ local function CreateProgressHUD()
 end
 
 -- ============================================
--- ROOT RIPPER DENGAN PROGRESS
+-- ROOT RIPPER DENGAN ESTIMASI WAKTU
 -- ============================================
 local function RootRipperPro()
     -- Inisialisasi HUD
@@ -89,13 +124,12 @@ local function RootRipperPro()
     MasterRoot.Name = "ROOT_EXTRACT_" .. os.time()
     
     -- Fungsi salin rekursif
-    local function CopyDeep(original, parent, progressCallback)
+    local function CopyDeep(original, parent)
         if not original then return end
         
         local copy = Instance.new(original.ClassName)
         copy.Name = original.Name
         
-        -- Salin properti
         local properties = {"CFrame", "Size", "Position", "Orientation", "Color", "BrickColor", "Material", 
                             "Transparency", "Reflectance", "Anchored", "CanCollide", "Shape", "Value", 
                             "StringValue", "NumberValue", "BoolValue", "ObjectValue", "Vector3Value"}
@@ -121,7 +155,7 @@ local function RootRipperPro()
         
         for _, child in ipairs(original:GetChildren()) do
             if child.ClassName ~= "Terrain" and child.ClassName ~= "Camera" then
-                CopyDeep(child, copy, progressCallback)
+                CopyDeep(child, copy)
             end
         end
         
@@ -129,24 +163,14 @@ local function RootRipperPro()
         return copy
     end
     
-    -- Hitung total objek untuk progress
-    local function CountObjects(container)
-        local count = 0
-        for _, obj in ipairs(container:GetDescendants()) do
-            if obj.ClassName ~= "Terrain" and obj.ClassName ~= "Camera" then
-                count = count + 1
-            end
-        end
-        return count
-    end
-    
     -- ========== EKSEKUSI BERTAHAP ==========
     local progress = 0
-    local totalSteps = 9 -- Jumlah bagian yang akan disalin
+    local totalSteps = 9
     
     local function UpdateProgress(step, sectionName)
         progress = math.floor((step / totalSteps) * 100)
-        hud.Update(progress, sectionName)
+        -- Kirim estimasi waktu ke HUD (dihitung internal)
+        hud.Update(progress, sectionName, nil)
         wait(0.3)
     end
     
@@ -243,10 +267,9 @@ local function RootRipperPro()
     MasterRoot:SetAttribute("DataStoreSnapshot", dsSnapshot)
     
     -- FINISH
-    hud.Update(100, "COMPLETE! All roots extracted")
+    hud.Update(100, "COMPLETE! All roots extracted", 0)
     wait(1)
     
-    -- Masukkan ke Workspace
     MasterRoot.Parent = workspace
     
     print("==========================================")
@@ -254,7 +277,6 @@ local function RootRipperPro()
     print("Folder master: " .. MasterRoot.Name)
     print("==========================================")
     
-    -- HUD hilang setelah 3 detik
     task.delay(3, function()
         hud.Destroy()
     end)
