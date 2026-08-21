@@ -1,4 +1,4 @@
--- TEST NOCLIP + JALAN LAMBAT + UI
+-- TEST NOCLIP + FLY + JALAN LAMBAT (PAKAI BODYVELOCITY)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "NOCLIP + WALK SLOW"
+label.Text = "NOCLIP + FLY + SLOW"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -60,7 +60,39 @@ btn.Font = Enum.Font.GothamBold
 btn.BorderSizePixel = 0
 btn.Parent = frame
 
--- NOCLIP + FLY
+-- VARIABLE BODYVELOCITY
+local flyBV = nil
+local targetY = nil
+
+-- FUNGSI FLY
+local function setFly(state, yPos)
+    if state then
+        if flyBV then flyBV:Destroy() end
+        flyBV = Instance.new("BodyVelocity")
+        flyBV.MaxForce = Vector3.new(0, 1e6, 0)
+        flyBV.Velocity = Vector3.new(0, 0, 0)
+        flyBV.Parent = root
+        targetY = yPos or root.Position.Y
+    else
+        if flyBV then
+            flyBV:Destroy()
+            flyBV = nil
+        end
+    end
+end
+
+-- FUNGSI JAGA POSISI Y
+local function keepY()
+    while flyBV and targetY do
+        local delta = targetY - root.Position.Y
+        if math.abs(delta) > 0.1 then
+            root.CFrame = CFrame.new(root.Position.X, targetY, root.Position.Z)
+        end
+        task.wait(0.05)
+    end
+end
+
+-- NOCLIP
 local function noclip(state)
     for _, v in pairs(char:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -68,11 +100,13 @@ local function noclip(state)
         end
     end
     if state then
-        hum.PlatformStand = true
         hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+        hum.PlatformStand = true
     else
-        hum.PlatformStand = false
         hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+        hum.PlatformStand = false
     end
 end
 
@@ -103,6 +137,7 @@ btn.MouseButton1Click:Connect(function()
         btn.Text = "▶ START"
         btn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
         noclip(false)
+        setFly(false)
         notif("⏹️ Dihentikan")
         return
     end
@@ -114,10 +149,16 @@ btn.MouseButton1Click:Connect(function()
     notif("🚀 Noclip + Fly ON")
     noclip(true)
 
+    -- FLY di ketinggian sekarang + 2 stud
+    local flyHeight = root.Position.Y + 2
+    setFly(true, flyHeight)
+    task.spawn(keepY)
+
     notif("🚶 Jalan lambat ke NPC...")
     walkTo(Vector3.new(510.56, 3.58, 598.88))
 
     noclip(false)
+    setFly(false)
     notif("✅ Sampai tujuan!")
     isRunning = false
     btn.Text = "▶ START"
@@ -132,4 +173,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅ TEST siap! Klik START untuk test noclip + jalan lambat.")
+notif("✅ TEST siap! Klik START untuk test noclip + fly + jalan lambat.")
