@@ -1,4 +1,4 @@
--- TEST JALAN PAKSA (LOOP MOVETO)
+-- TEST INTERACT + DIALOG + BELI BAHAN
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 TEST JALAN PAKSA"
+title.Text = "🧪 TEST BELI BAHAN"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "LOOP MOVETO SAMPAI TUJUAN"
+label.Text = "DIALOG + BELI BAHAN"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -60,7 +60,9 @@ btn.Font = Enum.Font.GothamBold
 btn.BorderSizePixel = 0
 btn.Parent = frame
 
--- JALAN PAKSA (LOOP)
+-- =====================================================
+-- ===== FUNGSI JALAN PAKSA =====
+-- =====================================================
 local function walkForce(pos)
     hum.WalkSpeed = 8
     local startTime = os.time()
@@ -71,7 +73,108 @@ local function walkForce(pos)
     hum.WalkSpeed = 16
 end
 
--- NOTIF
+-- =====================================================
+-- ===== INTERACT E (filter "open") =====
+-- =====================================================
+local function pressE()
+    for _, p in pairs(workspace:GetDescendants()) do
+        if p:IsA("ProximityPrompt") and p.Enabled == true then
+            local parent = p.Parent
+            if parent and parent:IsA("BasePart") then
+                local dist = (parent.Position - root.Position).Magnitude
+                if dist < 10 then
+                    local txt = p.ActionText or ""
+                    if not txt:lower():find("open") then
+                        p:Hold(0.5)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- =====================================================
+-- ===== KLIK DIALOG (2 KEMUNGKINAN) =====
+-- =====================================================
+local function clickDialog()
+    task.wait(0.8)
+    local dialogs = {"You here to buy?", "Yea.. you the guy?"}
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) then
+                local txt = btn.Text or ""
+                for _, d in ipairs(dialogs) do
+                    if txt:find(d) then
+                        btn:Click()
+                        task.wait(0.5)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- =====================================================
+-- ===== BELI BAHAN =====
+-- =====================================================
+local function clickItem(name)
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(name) then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function clickAmount(amount)
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(tostring(amount)) then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function clickExit()
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):lower():find("exit") then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function buyMaterials(amount)
+    pressE()
+    clickDialog()
+    clickItem("Gelatin") clickAmount(amount)
+    clickItem("Sugar Block Bag") clickAmount(amount)
+    clickItem("Water") clickAmount(amount)
+    clickExit()
+end
+
+-- =====================================================
+-- ===== NOTIF =====
+-- =====================================================
 local function notif(text)
     game.StarterGui:SetCore("SendNotification", {
         Title = "TEST",
@@ -80,6 +183,9 @@ local function notif(text)
     })
 end
 
+-- =====================================================
+-- ===== MAIN =====
+-- =====================================================
 local isRunning = false
 
 btn.MouseButton1Click:Connect(function()
@@ -95,10 +201,13 @@ btn.MouseButton1Click:Connect(function()
     btn.Text = "⏳ PROSES"
     btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 
-    notif("🚶 Jalan paksa ke NPC...")
+    notif("🚶 Jalan ke NPC...")
     walkForce(Vector3.new(510.56, 3.58, 598.88))
 
-    notif("✅ Sampai tujuan!")
+    notif("🛒 Beli bahan 1 paket...")
+    buyMaterials(1)
+
+    notif("✅ Selesai!")
     isRunning = false
     btn.Text = "▶ START"
     btn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
@@ -112,4 +221,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅ TEST siap! Klik START untuk jalan paksa ke NPC.")
+notif("✅ TEST siap! Klik START untuk jalan ke NPC, dialog, beli bahan.")
