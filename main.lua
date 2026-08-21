@@ -1,4 +1,4 @@
--- TEST JALAN NORMAL + UI (TANPA NOCLIP)
+-- TEST JALAN PAKSA (LOOP MOVETO)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 TEST JALAN"
+title.Text = "🧪 TEST JALAN PAKSA"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "JALAN NORMAL + SLOW"
+label.Text = "LOOP MOVETO SAMPAI TUJUAN"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -60,12 +60,13 @@ btn.Font = Enum.Font.GothamBold
 btn.BorderSizePixel = 0
 btn.Parent = frame
 
--- JALAN LAMBAT
-local function walkTo(pos)
+-- JALAN PAKSA (LOOP)
+local function walkForce(pos)
     hum.WalkSpeed = 8
-    hum:MoveTo(pos)
-    while (root.Position - pos).Magnitude > 5 do
-        task.wait(0.2)
+    local startTime = os.time()
+    while (root.Position - pos).Magnitude > 5 and os.time() - startTime < 120 do
+        hum:MoveTo(pos)
+        task.wait(0.5)
     end
     hum.WalkSpeed = 16
 end
@@ -94,8 +95,8 @@ btn.MouseButton1Click:Connect(function()
     btn.Text = "⏳ PROSES"
     btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 
-    notif("🚶 Jalan lambat ke NPC...")
-    walkTo(Vector3.new(510.56, 3.58, 598.88))
+    notif("🚶 Jalan paksa ke NPC...")
+    walkForce(Vector3.new(510.56, 3.58, 598.88))
 
     notif("✅ Sampai tujuan!")
     isRunning = false
@@ -111,4 +112,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅ TEST siap! Klik START untuk jalan lambat ke NPC.")
+notif("✅ TEST siap! Klik START untuk jalan paksa ke NPC.")
