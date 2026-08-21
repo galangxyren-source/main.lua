@@ -1,4 +1,4 @@
--- TEST INTERACT + DIALOG + BELI BAHAN
+-- TEST BELI BAHAN (LENGKAP)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 TEST BELI BAHAN"
+title.Text = "🧪 TEGSST BELI BAHAN"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "DIALOG + BELI BAHAN"
+label.Text = "DIALOG + SHOP + BELI"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -61,7 +61,7 @@ btn.BorderSizePixel = 0
 btn.Parent = frame
 
 -- =====================================================
--- ===== FUNGSI JALAN PAKSA =====
+-- ===== FUNGSI JALAN =====
 -- =====================================================
 local function walkForce(pos)
     hum.WalkSpeed = 8
@@ -74,7 +74,7 @@ local function walkForce(pos)
 end
 
 -- =====================================================
--- ===== INTERACT E (filter "open") =====
+-- ===== INTERACT E (HOLD 1 DETIK) =====
 -- =====================================================
 local function pressE()
     for _, p in pairs(workspace:GetDescendants()) do
@@ -85,7 +85,7 @@ local function pressE()
                 if dist < 10 then
                     local txt = p.ActionText or ""
                     if not txt:lower():find("open") then
-                        p:Hold(0.5)
+                        p:Hold(1)
                         return true
                     end
                 end
@@ -96,18 +96,18 @@ local function pressE()
 end
 
 -- =====================================================
--- ===== KLIK DIALOG (2 KEMUNGKINAN) =====
+-- ===== KLIK DIALOG =====
 -- =====================================================
 local function clickDialog()
-    task.wait(0.8)
+    task.wait(1)
     local dialogs = {"You here to buy?", "Yea.. you the guy?"}
-    for _, gui in pairs(player.PlayerGui:GetChildren()) do
-        for _, btn in pairs(gui:GetDescendants()) do
-            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) then
-                local txt = btn.Text or ""
+    for _, g in pairs(player.PlayerGui:GetChildren()) do
+        for _, b in pairs(g:GetDescendants()) do
+            if (b:IsA("TextButton") or b:IsA("ImageButton")) then
+                local txt = b.Text or ""
                 for _, d in ipairs(dialogs) do
                     if txt:find(d) then
-                        btn:Click()
+                        b:Click()
                         task.wait(0.5)
                         return true
                     end
@@ -119,57 +119,71 @@ local function clickDialog()
 end
 
 -- =====================================================
--- ===== BELI BAHAN =====
+-- ===== KLIK ITEM DI SHOP =====
 -- =====================================================
-local function clickItem(name)
-    task.wait(0.3)
-    for _, gui in pairs(player.PlayerGui:GetChildren()) do
-        for _, btn in pairs(gui:GetDescendants()) do
-            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(name) then
-                btn:Click()
-                task.wait(0.3)
-                return true
+local function clickShopItem(name)
+    task.wait(0.5)
+    for _, g in pairs(player.PlayerGui:GetChildren()) do
+        for _, b in pairs(g:GetDescendants()) do
+            if (b:IsA("TextButton") or b:IsA("ImageButton")) then
+                local txt = b.Text or ""
+                if txt:find(name) then
+                    b:Click()
+                    task.wait(0.3)
+                    return true
+                end
             end
         end
     end
     return false
 end
 
-local function clickAmount(amount)
-    task.wait(0.3)
-    for _, gui in pairs(player.PlayerGui:GetChildren()) do
-        for _, btn in pairs(gui:GetDescendants()) do
-            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(tostring(amount)) then
-                btn:Click()
-                task.wait(0.3)
-                return true
-            end
-        end
-    end
-    return false
-end
-
+-- =====================================================
+-- ===== KLIK EXIT =====
+-- =====================================================
 local function clickExit()
-    task.wait(0.3)
-    for _, gui in pairs(player.PlayerGui:GetChildren()) do
-        for _, btn in pairs(gui:GetDescendants()) do
-            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):lower():find("exit") then
-                btn:Click()
-                task.wait(0.3)
-                return true
+    task.wait(0.5)
+    for _, g in pairs(player.PlayerGui:GetChildren()) do
+        for _, b in pairs(g:GetDescendants()) do
+            if (b:IsA("TextButton") or b:IsA("ImageButton")) then
+                local txt = b.Text or ""
+                if txt:lower():find("exit") then
+                    b:Click()
+                    task.wait(0.3)
+                    return true
+                end
             end
         end
     end
     return false
 end
 
-local function buyMaterials(amount)
-    pressE()
-    clickDialog()
-    clickItem("Gelatin") clickAmount(amount)
-    clickItem("Sugar Block Bag") clickAmount(amount)
-    clickItem("Water") clickAmount(amount)
+-- =====================================================
+-- ===== BELI BAHAN (1 PAKET) =====
+-- =====================================================
+local function buyOnePacket()
+    -- 1. Interact E (hold 1 detik)
+    local success = pressE()
+    if not success then
+        return false
+    end
+
+    -- 2. Klik dialog
+    local dialogOk = clickDialog()
+    if not dialogOk then
+        return false
+    end
+
+    -- 3. Beli item satu per satu (dengan delay antar klik)
+    local items = {"Gelatin", "Sugar Block Bag", "Water"}
+    for _, item in ipairs(items) do
+        clickShopItem(item)
+        task.wait(0.5)
+    end
+
+    -- 4. Exit
     clickExit()
+    return true
 end
 
 -- =====================================================
@@ -205,9 +219,13 @@ btn.MouseButton1Click:Connect(function()
     walkForce(Vector3.new(510.56, 3.58, 598.88))
 
     notif("🛒 Beli bahan 1 paket...")
-    buyMaterials(1)
+    local ok = buyOnePacket()
+    if ok then
+        notif("✅ Beli bahan selesai!")
+    else
+        notif("❌ Gagal beli bahan!")
+    end
 
-    notif("✅ Selesai!")
     isRunning = false
     btn.Text = "▶ START"
     btn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
@@ -221,4 +239,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅ TEST siap! Klik START untuk jalan ke NPC, dialog, beli bahan.")
+notif("✅ TEST siap! Klik START untuk jalan ke NPC + beli bahan.")
