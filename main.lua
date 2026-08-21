@@ -1,4 +1,4 @@
--- SCAN GUI: LIHAT SEMUA TOMBOL
+-- SCAN GUI: KIRIM KE CHAT + NOTIF
 local player = game.Players.LocalPlayer
 
 local function scanGUI()
@@ -18,7 +18,6 @@ local function scanGUI()
     return found
 end
 
--- TAMPILKAN DI NOTIFIKASI
 local function notif(text)
     game.StarterGui:SetCore("SendNotification", {
         Title = "SCAN GUI",
@@ -27,18 +26,30 @@ local function notif(text)
     })
 end
 
--- JALANKAN SCAN
-task.wait(2) -- kasih waktu buat GUI muncul
+-- Tunggu 3 detik biar GUI sempat muncul
+task.wait(3)
+
 local results = scanGUI()
 
 if #results > 0 then
-    notif("Ditemukan " .. #results .. " tombol:\n" .. table.concat(results, "\n"))
+    -- Kirim ke notifikasi
+    notif("Ditemukan " .. #results .. " tombol!")
+    
+    -- Kirim ke chat game (biar keliatan di layar)
+    for i, txt in ipairs(results) do
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(
+            "[" .. i .. "] " .. txt,
+            "All"
+        )
+        task.wait(0.2)
+    end
+    
+    -- Kirim ke console executor (bukan F9)
+    warn("=== TOMBOL YANG DITEMUKAN ===")
+    for i, txt in ipairs(results) do
+        warn(i .. ". " .. txt)
+    end
 else
     notif("Tidak ada tombol ditemukan!")
-end
-
--- TAMPILKAN JUGA DI OUTPUT CONSOLE
-print("=== TOMBOL YANG DITEMUKAN ===")
-for i, txt in ipairs(results) do
-    print(i .. ". " .. txt)
+    warn("Tidak ada tombol ditemukan!")
 end
