@@ -1,4 +1,4 @@
--- TEST INTERAKSI PAKSA (RADIUS 15, HOLD 1.5)
+-- PAKSA INTERACT E (VIRTUAL INPUT)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 TEST INTERAKSI"
+title.Text = "🧪 PAKSA INTERACT E"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "PAKSA INTERAKSI + DIALOG"
+label.Text = "VIRTUAL INPUT + PROMPT"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -61,6 +61,36 @@ btn.BorderSizePixel = 0
 btn.Parent = frame
 
 -- =====================================================
+-- ===== VIRTUAL INPUT =====
+-- =====================================================
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local function pressKeyE()
+    VirtualInputManager:SendKeyEvent(true, "E", false, game)
+    task.wait(0.1)
+    VirtualInputManager:SendKeyEvent(false, "E", false, game)
+end
+
+-- =====================================================
+-- ===== FIRE PROMPT MANUAL =====
+-- =====================================================
+local function firePrompt()
+    for _, p in pairs(workspace:GetDescendants()) do
+        if p:IsA("ProximityPrompt") and p.Enabled == true then
+            local parent = p.Parent
+            if parent and parent:IsA("BasePart") then
+                local dist = (parent.Position - root.Position).Magnitude
+                if dist < 15 then
+                    p:Hold(2)
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- =====================================================
 -- ===== JALAN PAKSA =====
 -- =====================================================
 local function walkForce(pos)
@@ -71,27 +101,6 @@ local function walkForce(pos)
         task.wait(0.5)
     end
     hum.WalkSpeed = 16
-end
-
--- =====================================================
--- ===== INTERAKSI PAKSA (RADIUS 15) =====
--- =====================================================
-local function pressE()
-    local found = false
-    for _, p in pairs(workspace:GetDescendants()) do
-        if p:IsA("ProximityPrompt") and p.Enabled == true then
-            local parent = p.Parent
-            if parent and parent:IsA("BasePart") then
-                local dist = (parent.Position - root.Position).Magnitude
-                if dist < 15 then
-                    p:Hold(1.5)
-                    found = true
-                    break
-                end
-            end
-        end
-    end
-    return found
 end
 
 -- =====================================================
@@ -186,15 +195,22 @@ btn.MouseButton1Click:Connect(function()
     notif("🚶 Jalan ke NPC...")
     walkForce(Vector3.new(510.56, 3.58, 598.88))
 
-    notif("🖐️ Interaksi paksa...")
-    local ok = pressE()
-    if ok then
-        notif("✅ Interaksi berhasil!")
+    -- 1. PAKSA INTERACT E (VIRTUAL KEY)
+    notif("⌨️ Kirim tombol E...")
+    pressKeyE()
+    task.wait(0.5)
+
+    -- 2. FIRE PROMPT MANUAL
+    notif("🖐️ Fire ProximityPrompt...")
+    local fired = firePrompt()
+    if fired then
+        notif("✅ Prompt berhasil di-fire!")
     else
         notif("❌ Tidak ada prompt di radius 15!")
     end
 
-    if ok then
+    -- 3. DIALOG
+    if fired then
         notif("💬 Klik dialog...")
         local dialogOk = clickDialog()
         if dialogOk then
@@ -203,6 +219,7 @@ btn.MouseButton1Click:Connect(function()
             notif("❌ Dialog tidak ditemukan!")
         end
 
+        -- 4. SHOP
         if dialogOk then
             notif("🛒 Beli bahan...")
             local items = {"Gelatin", "Sugar Block Bag", "Water"}
