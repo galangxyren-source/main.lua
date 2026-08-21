@@ -1,4 +1,4 @@
--- PAKSA INTERACT E (VIRTUAL INPUT)
+-- INTERACT E DIPERPANJANG (HOLD 3 DETIK + VIRTUAL KEY)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 PAKSA INTERACT E"
+title.Text = "🧪 INTERACT E PANJANG"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "VIRTUAL INPUT + PROMPT"
+label.Text = "HOLD 3 DETIK + VIRTUAL"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -65,14 +65,15 @@ btn.Parent = frame
 -- =====================================================
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
-local function pressKeyE()
+local function holdE()
+    -- Tekan E tahan 3 detik
     VirtualInputManager:SendKeyEvent(true, "E", false, game)
-    task.wait(0.1)
+    task.wait(3)
     VirtualInputManager:SendKeyEvent(false, "E", false, game)
 end
 
 -- =====================================================
--- ===== FIRE PROMPT MANUAL =====
+-- ===== FIRE PROMPT MANUAL (HOLD 3 DETIK) =====
 -- =====================================================
 local function firePrompt()
     for _, p in pairs(workspace:GetDescendants()) do
@@ -81,7 +82,7 @@ local function firePrompt()
             if parent and parent:IsA("BasePart") then
                 local dist = (parent.Position - root.Position).Magnitude
                 if dist < 15 then
-                    p:Hold(2)
+                    p:Hold(3)
                     return true
                 end
             end
@@ -195,18 +196,18 @@ btn.MouseButton1Click:Connect(function()
     notif("🚶 Jalan ke NPC...")
     walkForce(Vector3.new(510.56, 3.58, 598.88))
 
-    -- 1. PAKSA INTERACT E (VIRTUAL KEY)
-    notif("⌨️ Kirim tombol E...")
-    pressKeyE()
+    -- 1. VIRTUAL HOLD E (3 DETIK)
+    notif("⌨️ Hold E 3 detik...")
+    holdE()
     task.wait(0.5)
 
-    -- 2. FIRE PROMPT MANUAL
-    notif("🖐️ Fire ProximityPrompt...")
+    -- 2. FIRE PROMPT MANUAL (HOLD 3 DETIK)
+    notif("🖐️ Fire Prompt 3 detik...")
     local fired = firePrompt()
     if fired then
-        notif("✅ Prompt berhasil di-fire!")
+        notif("✅ Prompt berhasil!")
     else
-        notif("❌ Tidak ada prompt di radius 15!")
+        notif("❌ Tidak ada prompt!")
     end
 
     -- 3. DIALOG
