@@ -1,4 +1,4 @@
--- INTERACT E DIPERPANJANG (HOLD 3 DETIK + VIRTUAL KEY)
+-- KLIK DIALOG (PASTI)
 local player = game.Players.LocalPlayer
 local char = player.Character
 if not char then
@@ -33,7 +33,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0, 200, 0, 30)
 title.Position = UDim2.new(0.5, -100, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "🧪 INTERACT E PANJANG"
+title.Text = "🧪 KLIK DIALOG"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -43,7 +43,7 @@ local label = Instance.new("TextLabel")
 label.Size = UDim2.new(0, 200, 0, 20)
 label.Position = UDim2.new(0.5, -100, 0, 38)
 label.BackgroundTransparency = 1
-label.Text = "HOLD 3 DETIK + VIRTUAL"
+label.Text = "PASTI KLIK DIALOG"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
 label.TextSize = 13
 label.Font = Enum.Font.Gotham
@@ -66,14 +66,13 @@ btn.Parent = frame
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local function holdE()
-    -- Tekan E tahan 3 detik
     VirtualInputManager:SendKeyEvent(true, "E", false, game)
     task.wait(3)
     VirtualInputManager:SendKeyEvent(false, "E", false, game)
 end
 
 -- =====================================================
--- ===== FIRE PROMPT MANUAL (HOLD 3 DETIK) =====
+-- ===== FIRE PROMPT =====
 -- =====================================================
 local function firePrompt()
     for _, p in pairs(workspace:GetDescendants()) do
@@ -105,11 +104,12 @@ local function walkForce(pos)
 end
 
 -- =====================================================
--- ===== KLIK DIALOG =====
+-- ===== KLIK DIALOG (PASTI) =====
 -- =====================================================
 local function clickDialog()
-    task.wait(1.5)
+    task.wait(2)  -- TUNGGU GUI LOAD
     local dialogs = {"You here to buy?", "Yea.. you the guy?"}
+    
     for _, g in pairs(player.PlayerGui:GetChildren()) do
         for _, b in pairs(g:GetDescendants()) do
             if (b:IsA("TextButton") or b:IsA("ImageButton")) then
@@ -117,7 +117,7 @@ local function clickDialog()
                 for _, d in ipairs(dialogs) do
                     if txt:find(d) then
                         b:Click()
-                        task.wait(0.5)
+                        task.wait(1)
                         return true
                     end
                 end
@@ -196,40 +196,33 @@ btn.MouseButton1Click:Connect(function()
     notif("🚶 Jalan ke NPC...")
     walkForce(Vector3.new(510.56, 3.58, 598.88))
 
-    -- 1. VIRTUAL HOLD E (3 DETIK)
+    -- 1. INTERACT
     notif("⌨️ Hold E 3 detik...")
     holdE()
     task.wait(0.5)
 
-    -- 2. FIRE PROMPT MANUAL (HOLD 3 DETIK)
     notif("🖐️ Fire Prompt 3 detik...")
-    local fired = firePrompt()
-    if fired then
-        notif("✅ Prompt berhasil!")
+    firePrompt()
+    task.wait(0.5)
+
+    -- 2. KLIK DIALOG (PASTI)
+    notif("💬 Klik dialog...")
+    local dialogOk = clickDialog()
+    if dialogOk then
+        notif("✅ Dialog berhasil!")
     else
-        notif("❌ Tidak ada prompt!")
+        notif("❌ Dialog tidak ditemukan!")
     end
 
-    -- 3. DIALOG
-    if fired then
-        notif("💬 Klik dialog...")
-        local dialogOk = clickDialog()
-        if dialogOk then
-            notif("✅ Dialog berhasil!")
-        else
-            notif("❌ Dialog tidak ditemukan!")
+    -- 3. SHOP
+    if dialogOk then
+        notif("🛒 Beli bahan...")
+        local items = {"Gelatin", "Sugar Block Bag", "Water"}
+        for _, item in ipairs(items) do
+            clickShopItem(item)
         end
-
-        -- 4. SHOP
-        if dialogOk then
-            notif("🛒 Beli bahan...")
-            local items = {"Gelatin", "Sugar Block Bag", "Water"}
-            for _, item in ipairs(items) do
-                clickShopItem(item)
-            end
-            clickExit()
-            notif("✅ Beli bahan selesai!")
-        end
+        clickExit()
+        notif("✅ Beli bahan selesai!")
     end
 
     isRunning = false
